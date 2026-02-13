@@ -1,4 +1,4 @@
-import { pool } from "../db.js";
+/*import { pool } from "../db.js";
 export const getApps = async (req, res) => {
   try {
     const limitParam = req.query.limit;
@@ -34,12 +34,76 @@ export const createApp = async (req, res) => {
     app_store_url,
   } = req.body;
 
-  const icon_url = req.file
-    ? `http://localhost:5000/uploads/${req.file.filename}`
-    : null;
+  // Make sure /uploads/ is included
+ // appsRoutes.js or controller
+const icon_url = req.file
+  ? `${process.env.BACKEND_URL}/uploads/${req.file.filename}`
+  : undefined; // don’t explicitly insert null
+
+
 
   const result = await pool.query(
     `INSERT INTO apps 
+    (name,slug,category,tagline,description,description_secondary,icon_url,app_store_url)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+    [
+      name,
+      slug,
+      category,
+      tagline,
+      description,
+      description_secondary,
+      icon_url,
+      app_store_url,
+    ]
+  );
+
+  res.json(result.rows[0]);
+};
+
+
+export const updateApp = async (req, res) => {
+  const { id } = req.params;
+  const { name, tagline, description } = req.body;
+
+  await pool.query(
+    "UPDATE apps SET name=$1, tagline=$2, description=$3 WHERE id=$4",
+    [name, tagline, description, id]
+  );
+
+  res.json({ message: "updated" });
+};
+
+export const deleteApp = async (req, res) => {
+  await pool.query("DELETE FROM apps WHERE id=$1", [req.params.id]);
+  res.json({ message: "deleted" });
+};
+
+*/
+import { pool } from "../db.js";
+
+export const getApps = async (req, res) => {
+  const result = await pool.query("SELECT * FROM apps ORDER BY id DESC");
+  res.json(result.rows);
+};
+
+export const createApp = async (req, res) => {
+  const {
+    name,
+    slug,
+    category,
+    tagline,
+    description,
+    description_secondary,
+    app_store_url,
+  } = req.body;
+
+  const icon_url = req.file
+    ? `${process.env.BACKEND_URL}/uploads/apps/${req.file.filename}`
+    : null;
+
+  const result = await pool.query(
+    `INSERT INTO apps
     (name,slug,category,tagline,description,description_secondary,icon_url,app_store_url)
     VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
     [
@@ -73,5 +137,4 @@ export const deleteApp = async (req, res) => {
   await pool.query("DELETE FROM apps WHERE id=$1", [req.params.id]);
   res.json({ message: "deleted" });
 };
-
 
